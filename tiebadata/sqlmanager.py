@@ -106,7 +106,7 @@ class SqlManager(object):
         p_sql = "select subject from postinfo where id = %s" % postid
         if self.cursor.execute(p_sql):
             subject = self.cursor.fetchone()[0]
-            s_sql = "select fd, sd from catelog where name = '%s'" % subject
+            s_sql = "select fd, sd from catelog where name = '%s'" % subject.encode("utf-8")
             if self.cursor.execute(s_sql):
                 return self.cursor.fetchone()
         return None

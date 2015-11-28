@@ -43,20 +43,20 @@ class SubjectSpider(Spider):
             except:
                 traceback.print_exc()
 
-        #for div in contents:
-        #    data = div.xpath("@data-field").extract()
-        #    item = PostItem()
-        #    try:
-        #        tmp_dict = json.loads(data[0])
-        #        for ko, vo in tmp_dict.iteritems():
-        #            for ki, vi in vo.iteritems():
-        #                if ki in item.fields.keys():
-        #                    item[ki] = vi
-        #    except:
-        #        traceback.print_exc()
-        #    else:
-        #        self.active_post = str(response.url.split("/")[-1])
-        #        yield item
+        for div in contents:
+            data = div.xpath("@data-field").extract()
+            item = PostItem()
+            try:
+                tmp_dict = json.loads(data[0])
+                for ko, vo in tmp_dict.iteritems():
+                    for ki, vi in vo.iteritems():
+                        if ki in item.fields.keys():
+                            item[ki] = vi
+            except:
+                traceback.print_exc()
+            else:
+                self.active_post = str(response.url.split("/")[-1])
+                yield item
 
     def parse(self, response):
         contents = response.css("#thread_list").xpath('//li[contains(@data-field, "id")]')
@@ -96,8 +96,7 @@ class SubjectSpider(Spider):
                 traceback.print_exc()
 
         if self.refresh_postlist:
-            #nav = response.css(".pager").xpath("a[contains(text(), '>')]")
-            #if nav:
-            #    np = "http://tieba.baidu.com" + nav.xpath("@href").extract()[0]
-            #    yield Request(np, self.parse)
-            pass
+            nav = response.css(".pager").xpath("a[contains(text(), '>')]")
+            if nav:
+                np = "http://tieba.baidu.com" + nav.xpath("@href").extract()[0]
+                yield Request(np, self.parse)
