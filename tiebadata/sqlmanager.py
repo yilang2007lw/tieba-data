@@ -33,7 +33,8 @@ class SqlManager(object):
         return ext
 
     def initialize(self):
-        self.conn = MySQLdb.connect(host=settings.get('DB_HOST'), user=settings.get('DB_USER'), passwd=settings.get('DB_PASSWD'), use_unicode=True, charset="utf8")
+        self.conn = MySQLdb.connect(host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
+                passwd=settings.get('DB_PASSWD'), use_unicode=True, charset="utf8")
         self.cursor = self.conn.cursor()
         self.cursor.execute('create database if not exists %s' % settings.get('DB_DATABASE'))
         self.conn.select_db(settings.get('DB_DATABASE'))
@@ -81,18 +82,37 @@ class SqlManager(object):
             traceback.print_exc()
 
     def insert_postinfo_item(self, item):
-        insert_sql = "replace into postinfo (id, author_name, first_post_id, reply_num, is_bakan,  \
-                      vid, is_good, is_top, is_protal, title, timestamp, subject) VALUES \
-                      (%d, %s, %d, %d, %d, %s, %d, %d, %d, %s, %s, %s) " %  \
-                      (item["post_id"],"'"+item["author_name"].encode("utf-8")+"'", item["first_post_id"], item["reply_num"],
-                      item["is_bakan"],"'"+item["vid"].encode("utf-8")+"'", item["is_good"], item["is_top"], item["is_protal"], 
-                      "'"+item["title"].encode("utf-8")+"'", "'"+item["timestamp"].encode("utf-8")+"'", "'"+item["subject"].encode("utf-8")+"'")
-        self.cursor.execute(insert_sql)
-        self.conn.commit()
+        try:
+            insert_sql = "replace into postinfo (id, author_name, first_post_id, reply_num, is_bakan,  \
+                          vid, is_good, is_top, is_protal, title, timestamp, subject) VALUES \
+                          (%d, '%s', %d, %d, %d,'%s', %d, %d, %d, '%s', '%s', '%s') " %  \
+                          (item["post_id"], item["author_name"], item["first_post_id"], item["reply_num"],
+                          item["is_bakan"], item["vid"], item["is_good"], item["is_top"], item["is_protal"], 
+                          item["title"], item["timestamp"], item["subject"])
+            self.cursor.execute(insert_sql)
+            self.conn.commit()
+        except:
+            print "----inset postinfo item failed--------", item
+            traceback.print_exc()
+
+    def get_subject_url(self, subject):
+        sql = "select url from catelog where name = '%s' " % subject
+        if self.cursor.execute(sql):
+            return self.cursor.fetchone()[0]
+        else:
+            return None
+
+    def get_post_fd_sd(self, postid):
+        p_sql = "select subject from postinfo where id = %s" % postid
+        if self.cursor.execute(p_sql):
+            subject = self.cursor.fetchone()[0]
+            s_sql = "select fd, sd from catelog where name = '%s'" % subject
+            if self.cursor.execute(s_sql):
+                return self.cursor.fetchone()
+        return None
 
     def get_post_replynum(self, postid):
         sql = "select reply_num from postinfo where id = %s" % postid
         if self.cursor.execute(sql):
             return self.cursor.fetchone()[0]
         return None
-

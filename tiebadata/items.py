@@ -13,7 +13,10 @@ from scrapy.contrib.loader.processor import TakeFirst
 
 
 def encode_utf8(value):
-    return value.encode("utf-8")
+    if isinstance(value, unicode):
+        return value.encode("utf-8")
+    else:
+        return value
 
 class ConvertItemLoader(ItemLoader):
 
@@ -31,11 +34,11 @@ class PostListItem(Item):
     author_name = Field()
     first_post_id = Field()
     reply_num = Field()
-    is_bakan = Field()
-    vid = Field()
-    is_good = Field()
-    is_top = Field()
-    is_protal = Field()
+    is_bakan = Field(default=0)
+    vid = Field(default=None)
+    is_good = Field(default=0)
+    is_top = Field(default=0)
+    is_protal = Field(default=0)
     title = Field()
     timestamp = Field()
     subject = Field()
@@ -58,7 +61,7 @@ class PostItem(Item):
     date = Field()
     vote_crypt = Field()
     post_no = Field()
-    type = Field()
+    content_type = Field()
     comment_num = Field()
     ptype = Field()
     is_saveface = Field()
