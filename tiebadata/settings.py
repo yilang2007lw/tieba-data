@@ -20,3 +20,18 @@ DOWNLOADER_MIDDLEWARES = {
     "scrapy.contrib.downloadermiddleware.useragent.UserAgentMiddleware":None,
     "tiebadata.middleware.useragent.RandomUserAgentMiddleware":300,
 }
+
+ITEM_PIPELINES = {
+        "tiebadata.pipelines.CatelogPipeline":600,
+}
+
+EXTENSIONS = {
+    "tiebadata.sqlmanager.SqlManager":500,
+}
+
+DB_USER="spider"
+DB_HOST="localhost"
+DB_PASSWD="tiebaspider"
+DB_DATABASE="tiebadata"
+
+DATA_HOME="/Volumes/MobileHD/"
