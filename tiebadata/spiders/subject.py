@@ -95,8 +95,8 @@ class SubjectSpider(Spider):
                 self.refresh_postlist = False
                 traceback.print_exc()
 
-        #if self.refresh_postlist:
-        #    nav = response.css(".pager").xpath("a[contains(text(), '>')]")
-        #    if nav:
-        #        np = "http://tieba.baidu.com" + nav.xpath("@href").extract()[0]
-        #        yield Request(np, self.parse)
+        if self.refresh_postlist:
+            nav = response.css(".pager").xpath("a[contains(text(), '>')]")
+            if nav:
+                np = "http://tieba.baidu.com" + nav.xpath("@href").extract()[0]
+                yield Request(np, self.parse)
