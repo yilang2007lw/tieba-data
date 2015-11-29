@@ -101,7 +101,7 @@ class SqlManager(object):
 
     def get_subject_url(self, subject):
         cursor = self.conn.cursor()
-        sql = "select url from catalog where name = '%s' " % subject
+        sql = "select url from catalog where name = '%s' " % subject.encode("utf-8")
         ret = None
         if cursor.execute(sql):
             ret = cursor.fetchone()[0]

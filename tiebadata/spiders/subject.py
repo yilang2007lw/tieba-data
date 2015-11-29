@@ -20,7 +20,7 @@ class SubjectSpider(Spider):
         self.refresh_postlist = True
 
     def start_requests(self):
-        url = self.crawler.sqlmanager.get_subject_url(self.subject)
+        url = self.crawler.sqlmanager.get_subject_url(unicode(self.subject, "utf-8"))
         if url:
             yield Request(url, self.parse)
 
