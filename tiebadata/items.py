@@ -32,7 +32,7 @@ class CatelogItem(Item):
 class PostListItem(Item):
     post_id = Field()
     author_name = Field()
-    first_post_id = Field()
+    first_post_id = Field(default=0)
     reply_num = Field()
     is_bakan = Field(default=0)
     vid = Field(default=None)

@@ -29,7 +29,7 @@ class PostListPipeline(object):
 
     def process_item(self, item, spider):
         if isinstance(item, PostListItem):
-            if item.has_key("post_id") and item.has_key("author_name") and item.has_key("first_post_id"):
+            if item.has_key("post_id") and item.has_key("author_name"):
                 mgr = spider.crawler.sqlmanager
                 mgr.insert_postinfo_item(item)
             else:

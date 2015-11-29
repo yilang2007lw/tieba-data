@@ -94,7 +94,7 @@ class SqlManager(object):
             cursor.execute(insert_sql)
             self.conn.commit()
         except:
-            print "----inset postinfo item failed--------", item
+            print "----insert postinfo item failed--------", item
             self.conn.rollback()
         finally:
             cursor.close()
