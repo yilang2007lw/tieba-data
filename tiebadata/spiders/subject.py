@@ -17,7 +17,6 @@ class SubjectSpider(Spider):
         super(SubjectSpider, self).__init__()
         self.subject = subject
         self.active_post = None
-        self.active_postlist = None
         self.refresh_postlist = True
 
     def start_requests(self):
@@ -56,6 +55,7 @@ class SubjectSpider(Spider):
                 traceback.print_exc()
             else:
                 self.active_post = str(response.url.split("/")[-1])
+                item["subject"] = response.meta['pitem']["subject"].decode("utf-8")
                 yield item
 
     def parse(self, response):
@@ -95,8 +95,8 @@ class SubjectSpider(Spider):
                 self.refresh_postlist = False
                 traceback.print_exc()
 
-        if self.refresh_postlist:
-            nav = response.css(".pager").xpath("a[contains(text(), '>')]")
-            if nav:
-                np = "http://tieba.baidu.com" + nav.xpath("@href").extract()[0]
-                yield Request(np, self.parse)
+        #if self.refresh_postlist:
+        #    nav = response.css(".pager").xpath("a[contains(text(), '>')]")
+        #    if nav:
+        #        np = "http://tieba.baidu.com" + nav.xpath("@href").extract()[0]
+        #        yield Request(np, self.parse)

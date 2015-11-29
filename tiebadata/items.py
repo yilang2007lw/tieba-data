@@ -67,3 +67,4 @@ class PostItem(Item):
     is_saveface = Field()
     props = Field()
     post_index = Field()
+    subject = Field()

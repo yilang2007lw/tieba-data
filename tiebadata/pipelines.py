@@ -54,15 +54,16 @@ class PostPipeline(object):
                 page = "1"
 
             mgr = spider.crawler.sqlmanager
-            ret = mgr.get_post_fd_sd(pid)
+            ret = mgr.get_subject_fd_sd(item["subject"])
             if ret:
                 (fd, sd) = ret
             else:
                 raise DropItem("Invalid PostItem:%s" % item)
-            post_dir = os.path.join(settings["DATA_HOME"], "tiebadata", fd.encode("utf-8"), sd.encode("utf-8"), pid)
+            post_dir = os.path.join(settings["DATA_HOME"], "tiebadata", fd.encode("utf-8"), sd.encode("utf-8"), item["subject"].encode("utf-8"), pid)
             if not os.path.exists(post_dir):
                 os.makedirs(post_dir)
             post_file = os.path.join(post_dir, page)
+
             if not os.path.exists(post_file):
                 open(post_file, "w+").close()
 
