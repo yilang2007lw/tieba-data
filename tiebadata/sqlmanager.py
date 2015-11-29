@@ -37,7 +37,7 @@ class SqlManager(object):
         cursor.execute('create database if not exists %s' % settings.get('DB_DATABASE'))
         self.conn.select_db(settings.get('DB_DATABASE'))
 
-        table_catelog_sql = '''create table if not exists catelog (
+        table_catalog_sql = '''create table if not exists catalog (
             id BIGINT PRIMARY KEY AUTO_INCREMENT,
             name VARCHAR(255) NOT NULL,
             fd VARCHAR(255),
@@ -45,7 +45,7 @@ class SqlManager(object):
             url VARCHAR(255),
             UNIQUE (name)
         ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8;'''
-        cursor.execute(table_catelog_sql)
+        cursor.execute(table_catalog_sql)
 
         table_postinfo_sql = '''create table if not exists postinfo (
             id BIGINT PRIMARY KEY,
@@ -70,14 +70,14 @@ class SqlManager(object):
         self.conn.commit()
         self.conn.close()
 
-    def insert_catelog_item(self, item):
+    def insert_catalog_item(self, item):
         cursor = self.conn.cursor()
         try:
-            insert_sql = "replace into catelog (name, fd, sd, url) VALUES ('%s', '%s', '%s', '%s')" % (item["name"], item["fd"], item["sd"], item["url"])
+            insert_sql = "replace into catalog (name, fd, sd, url) VALUES ('%s', '%s', '%s', '%s')" % (item["name"], item["fd"], item["sd"], item["url"])
             cursor.execute(insert_sql)
             self.conn.commit()
         except:
-            print "----insert catelog item failed--------", item
+            print "----insert catalog item failed--------", item
             self.conn.rollback()
         finally:
             cursor.close()
@@ -101,7 +101,7 @@ class SqlManager(object):
 
     def get_subject_url(self, subject):
         cursor = self.conn.cursor()
-        sql = "select url from catelog where name = '%s' " % subject
+        sql = "select url from catalog where name = '%s' " % subject
         ret = None
         if cursor.execute(sql):
             ret = cursor.fetchone()[0]
@@ -110,7 +110,7 @@ class SqlManager(object):
 
     def get_subject_fd_sd(self, subject):
         cursor = self.conn.cursor()
-        s_sql = "select fd, sd from catelog where name = '%s'" % subject.encode("utf-8")
+        s_sql = "select fd, sd from catalog where name = '%s'" % subject.encode("utf-8")
         ret = None
         if cursor.execute(s_sql):
             ret = cursor.fetchone()

@@ -3,14 +3,14 @@
 
 from scrapy import Spider
 from scrapy.http import Request
-from tiebadata.items import CatelogItem
+from tiebadata.items import CatalogItem
 from tiebadata.items import ConvertItemLoader
 import urllib
 import urlparse
 import traceback
 
-class CatelogSpider(Spider):
-    name = "catelog"
+class CatalogSpider(Spider):
+    name = "catalog"
     allowed_domains = ["tieba.baidu.com"]
     start_urls = (
         #"http://tieba.baidu.com/f/fdir?fd=%D3%E9%C0%D6%C3%F7%D0%C7&sd=%C4%DA%B5%D8%C3%F7%D0%C7",
@@ -33,7 +33,7 @@ class CatelogSpider(Spider):
         for a in contents:
             title = a.xpath("a/text()").extract()
             link = a.xpath("a/@href").extract()
-            il = ConvertItemLoader(CatelogItem())
+            il = ConvertItemLoader(CatalogItem())
             il.add_value(u"name", title)
             il.add_value(u"fd", fd)
             il.add_value(u"sd", sd)

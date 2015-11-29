@@ -22,7 +22,7 @@ DOWNLOADER_MIDDLEWARES = {
 }
 
 ITEM_PIPELINES = {
-        "tiebadata.pipelines.CatelogPipeline":600,
+        "tiebadata.pipelines.CatalogPipeline":600,
         "tiebadata.pipelines.PostListPipeline": 500,
         "tiebadata.pipelines.PostPipeline": 400,
 }

@@ -6,7 +6,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
-from tiebadata.items import CatelogItem
+from tiebadata.items import CatalogItem
 from tiebadata.items import PostListItem
 from tiebadata.items import PostItem
 from scrapy.conf import settings
@@ -14,15 +14,15 @@ from scrapy.exceptions import DropItem
 import os
 import json
 
-class CatelogPipeline(object):
+class CatalogPipeline(object):
 
     def process_item(self, item, spider):
-        if isinstance(item, CatelogItem):
+        if isinstance(item, CatalogItem):
             if item.has_key("name") and item.has_key("url"):
                 mgr = spider.crawler.sqlmanager
-                mgr.insert_catelog_item(item)
+                mgr.insert_catalog_item(item)
             else:
-                raise DropItem("Invalid CatelogItem:%s" % item)
+                raise DropItem("Invalid CatalogItem:%s" % item)
         return item
 
 class PostListPipeline(object):

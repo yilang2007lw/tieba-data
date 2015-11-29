@@ -23,7 +23,7 @@ class ConvertItemLoader(ItemLoader):
     default_input_processor = MapCompose(encode_utf8)
     default_output_processor = TakeFirst()
 
-class CatelogItem(Item):
+class CatalogItem(Item):
     name = Field()
     fd = Field()
     sd = Field()
