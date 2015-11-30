@@ -43,6 +43,7 @@ class SqlManager(object):
             fd VARCHAR(255),
             sd VARCHAR(255),
             url VARCHAR(255),
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE (name)
         ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8;'''
         cursor.execute(table_catalog_sql)

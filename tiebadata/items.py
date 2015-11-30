@@ -29,6 +29,9 @@ class CatalogItem(Item):
     sd = Field()
     url = Field()
 
+    def __str__(self):
+        return "<CatalogItem %s,%s,%s>" % (self["fd"], self["sd"], self["name"])
+
 class PostListItem(Item):
     post_id = Field()
     author_name = Field()
@@ -42,6 +45,9 @@ class PostListItem(Item):
     title = Field()
     timestamp = Field()
     subject = Field()
+
+    def __str__(self):
+        return "<PostListItem %s,%s,%s>" % (self["subject"], self["post_id"], self["title"])
 
 class PostItem(Item):
     user_id = Field()
@@ -68,3 +74,6 @@ class PostItem(Item):
     props = Field()
     post_index = Field()
     subject = Field()
+
+    def __str__(self):
+        return "<PostItem %s,%s,%s>" % (self["subject"], self["post_id"], self["level_id"])
