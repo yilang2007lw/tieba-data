@@ -3,7 +3,7 @@
 
 from twisted.internet import reactor
 from scrapy.crawler import Crawler
-#from scrapy import signals
+from scrapy import signals
 from scrapy.log import ScrapyFileLogObserver
 from scrapy.conf import settings
 from tiebadata.spiders.catalog import CatalogSpider
@@ -14,6 +14,9 @@ import traceback
 import logging
 import os
 import time
+import copy
+
+remain_spiders = []
 
 def crawl_catalog_table():
     print "------crawl catalog table---------"
@@ -58,10 +61,19 @@ def crawl_one_subject(subject):
     print "------crawl one subject---------", subject
     return crawl_spiders([SubjectSpider(subject)])
 
+def spider_closed_cb(spider):
+    global remain_spiders
+    remain_spiders.remove(spider)
+    print "-------spider closed---------", spider, len(remain_spiders)
+    if not remain_spiders:
+        reactor.stop()
+    
 def crawl_spiders(spiders):
+    global remain_spiders
+    remain_spiders = copy.copy(spiders)
     for spider in spiders:
         crawler = Crawler(settings)
-        #crawler.signals.connect(reactor.stop, signal=signals.spider_closed)
+        crawler.signals.connect(spider_closed_cb, signal=signals.spider_closed)
         crawler.configure()
         crawler.crawl(spider)
         crawler.start()
@@ -74,18 +86,17 @@ if __name__ == "__main__":
     group.add_argument("-o", "--one", action="store_true", help="crawl this tieba")
     group.add_argument("-f", "--fd", action="store_true", help="crawl tieba in the fd")
     group.add_argument("-s", "--sd", action="store_true", help="crawl tieba in the sd")
-    group.add_argument("-t", "--target", type=lambda s: unicode(s, "utf-8"), help="crawl target for one/fd/sd")
+    parser.add_argument("-t", "--target", type=str, help="crawl target for one/fd/sd")
     args = parser.parse_args()
 
-    path = os.path.join(os.path.dirname(__file__), "log", time.strftime("%Y-%m-%d %H:%M:%s"))
-    print "---log path------", path
+    path = os.path.join(os.path.dirname(__file__), "log", time.strftime('%Y-%m-%d_%H:%M:%s'))
     logfile = open(path, "w")
     log_observer = ScrapyFileLogObserver(logfile, level=logging.DEBUG)
     log_observer.start()
 
     if args.catalog:
         crawl_catalog_table()
-    if args.all:
+    elif args.all:
         crawl_all_catalog()
     elif args.one:
         crawl_one_subject(args.target)

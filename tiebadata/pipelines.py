@@ -22,7 +22,7 @@ class CatalogPipeline(object):
                 mgr = spider.crawler.sqlmanager
                 mgr.insert_catalog_item(item)
             else:
-                raise DropItem("Invalid CatalogItem:%s" % item)
+                raise DropItem("Invalid CatalogItem")
         return item
 
 class PostListPipeline(object):
@@ -33,7 +33,7 @@ class PostListPipeline(object):
                 mgr = spider.crawler.sqlmanager
                 mgr.insert_postinfo_item(item)
             else:
-                raise DropItem("Invalid PostListItem:%s" % item)
+                raise DropItem("Invalid PostListItem")
         return item
 
 class PostPipeline(object):
@@ -58,7 +58,7 @@ class PostPipeline(object):
             if ret:
                 (fd, sd) = ret
             else:
-                raise DropItem("Invalid PostItem:%s" % item)
+                raise DropItem("Invalid PostItem")
             post_dir = os.path.join(settings["DATA_HOME"], "tiebadata", fd.encode("utf-8"), sd.encode("utf-8"), item["subject"].encode("utf-8"), pid)
             if not os.path.exists(post_dir):
                 os.makedirs(post_dir)

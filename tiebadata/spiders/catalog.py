@@ -41,12 +41,11 @@ class CatalogSpider(Spider):
             il.load_item()
             yield il.item
 
-        try:
-            idx = nav.xpath("a/text()").extract().index(u'\u4e0b\u4e00\u9875')
+        links = nav.xpath("a/text()").extract()
+        if u'\u4e0b\u4e00\u9875' in links:
+            idx = links.index(u'\u4e0b\u4e00\u9875')
             np = "http://tieba.baidu.com" + nav.xpath("a/@href").extract()[idx]
             yield Request(np, callback = self.parse)
-        except:
-            traceback.print_exc()
 
     def parse(self, response):
         contents = response.css("#right-sec").css(".class-item")
