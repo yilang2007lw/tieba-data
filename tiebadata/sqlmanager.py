@@ -5,7 +5,9 @@ import MySQLdb
 
 from scrapy import signals
 from scrapy.exceptions import NotConfigured
-from scrapy.conf import settings
+from scrapy.utils.project import get_project_settings
+
+settings = get_project_settings()
 
 def ensure_str(string):
     if isinstance(string, unicode):

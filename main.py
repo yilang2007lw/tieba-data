@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from twisted.internet import reactor
-from twisted.internet import defer
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
 from scrapy.utils.log import configure_logging
@@ -60,12 +59,17 @@ def crawl_one_subject(subject):
     print "------crawl one subject---------", subject
     return crawl_spiders([SubjectSpider(subject)])
 
-@defer.inlineCallbacks
 def crawl_spiders(spiders):
-    runner = CrawlerRunner()
+    runner = CrawlerRunner(settings)
     for spider in spiders:
-        yield runner.crawl(spider)
-    reactor.stop()
+        if isinstance(spider, SubjectSpider):
+            runner.crawl(spider, spider.subject)
+        else:
+            runner.crawl(spider)
+    d = runner.join()
+    d.addBoth(lambda _: reactor.stop())
+
+    reactor.run()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -78,7 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--target", type=str, help="crawl target for one/fd/sd")
     args = parser.parse_args()
 
-    path = os.path.join(os.path.dirname(__file__), "log", time.strftime('%Y-%m-%d_%H:%M:%s'))
+    path = os.path.join(os.path.dirname(__file__), "log", time.strftime('%Y%m%d_%H%M%S'))
     logging.basicConfig(filename=path, level=logging.DEBUG)
     configure_logging()
 
@@ -94,5 +98,3 @@ if __name__ == "__main__":
         crawl_sd_catalog(args.target)
     else:
         print "------invalid---------"
-
-    reactor.run()

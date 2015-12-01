@@ -9,7 +9,6 @@
 from tiebadata.items import CatalogItem
 from tiebadata.items import PostListItem
 from tiebadata.items import PostItem
-from scrapy.conf import settings
 from scrapy.exceptions import DropItem
 import os
 import json
@@ -18,7 +17,8 @@ class CatalogPipeline(object):
 
     def process_item(self, item, spider):
         if isinstance(item, CatalogItem):
-            if item.has_key("name") and item.has_key("url"):
+            keys = item.keys()
+            if "name" in keys and "url" in keys:
                 mgr = spider.crawler.sqlmanager
                 mgr.insert_catalog_item(item)
             else:
@@ -29,7 +29,8 @@ class PostListPipeline(object):
 
     def process_item(self, item, spider):
         if isinstance(item, PostListItem):
-            if item.has_key("post_id") and item.has_key("author_name"):
+            keys = item.keys()
+            if "post_id" in keys and "author_name" in keys:
                 mgr = spider.crawler.sqlmanager
                 mgr.insert_postinfo_item(item)
             else:
@@ -59,7 +60,7 @@ class PostPipeline(object):
                 (fd, sd) = ret
             else:
                 raise DropItem("Invalid PostItem")
-            post_dir = os.path.join(settings["DATA_HOME"], "tiebadata", fd.encode("utf-8"), sd.encode("utf-8"), item["subject"].encode("utf-8"), pid)
+            post_dir = os.path.join(spider.settings["DATA_HOME"], "tiebadata", fd.encode("utf-8"), sd.encode("utf-8"), item["subject"].encode("utf-8"), pid)
             if not os.path.exists(post_dir):
                 os.makedirs(post_dir)
             post_file = os.path.join(post_dir, page)

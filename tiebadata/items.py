@@ -24,7 +24,7 @@ class ConvertItemLoader(ItemLoader):
     default_output_processor = TakeFirst()
 
 class CatalogItem(Item):
-    name = Field(default=None)
+    name = Field()
     fd = Field()
     sd = Field()
     url = Field()

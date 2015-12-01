@@ -17,7 +17,7 @@ NEWSPIDER_MODULE = 'tiebadata.spiders'
 #USER_AGENT = 'tiebadata (+http://www.yourdomain.com)'
 
 DOWNLOADER_MIDDLEWARES = {
-    "scrapy.contrib.downloadermiddleware.useragent.UserAgentMiddleware":None,
+    "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware":None,
     "tiebadata.middleware.useragent.RandomUserAgentMiddleware":300,
 }
 
