@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from twisted.internet import reactor
-from scrapy.crawler import Crawler
-from scrapy import signals
-from scrapy.log import ScrapyFileLogObserver
-from scrapy.conf import settings
+from twisted.internet import defer
+from scrapy.crawler import CrawlerRunner
+from scrapy.utils.project import get_project_settings
+from scrapy.utils.log import configure_logging
 from tiebadata.spiders.catalog import CatalogSpider
 from tiebadata.spiders.subject import SubjectSpider
 import argparse
@@ -14,9 +14,8 @@ import traceback
 import logging
 import os
 import time
-import copy
 
-remain_spiders = []
+settings = get_project_settings()
 
 def crawl_catalog_table():
     print "------crawl catalog table---------"
@@ -32,7 +31,7 @@ def crawl_fd_catalog(fd):
                 passwd=settings.get('DB_PASSWD'), use_unicode=True, charset="utf8")
         cursor = conn.cursor()
         conn.select_db(settings.get('DB_DATABASE'))
-        sql = "select name from catalog where fd = '%'" % fd.encode("utf-8")
+        sql = "select name from catalog where fd = '%s'" % fd
         cursor.execute(sql)
         spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
         cursor.close()
@@ -48,7 +47,7 @@ def crawl_sd_catalog(sd):
                 passwd=settings.get('DB_PASSWD'), use_unicode=True, charset="utf8")
         cursor = conn.cursor()
         conn.select_db(settings.get('DB_DATABASE'))
-        sql = "select name from catalog where sd = '%'" % sd.encode("utf-8")
+        sql = "select name from catalog where sd = '%s'" % sd
         cursor.execute(sql)
         spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
         cursor.close()
@@ -61,22 +60,12 @@ def crawl_one_subject(subject):
     print "------crawl one subject---------", subject
     return crawl_spiders([SubjectSpider(subject)])
 
-def spider_closed_cb(spider):
-    global remain_spiders
-    remain_spiders.remove(spider)
-    print "-------spider closed---------", spider, len(remain_spiders)
-    if not remain_spiders:
-        reactor.stop()
-    
+@defer.inlineCallbacks
 def crawl_spiders(spiders):
-    global remain_spiders
-    remain_spiders = copy.copy(spiders)
+    runner = CrawlerRunner()
     for spider in spiders:
-        crawler = Crawler(settings)
-        crawler.signals.connect(spider_closed_cb, signal=signals.spider_closed)
-        crawler.configure()
-        crawler.crawl(spider)
-        crawler.start()
+        yield runner.crawl(spider)
+    reactor.stop()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -90,9 +79,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     path = os.path.join(os.path.dirname(__file__), "log", time.strftime('%Y-%m-%d_%H:%M:%s'))
-    logfile = open(path, "w")
-    log_observer = ScrapyFileLogObserver(logfile, level=logging.DEBUG)
-    log_observer.start()
+    logging.basicConfig(filename=path, level=logging.DEBUG)
+    configure_logging()
 
     if args.catalog:
         crawl_catalog_table()
@@ -106,4 +94,5 @@ if __name__ == "__main__":
         crawl_sd_catalog(args.target)
     else:
         print "------invalid---------"
+
     reactor.run()

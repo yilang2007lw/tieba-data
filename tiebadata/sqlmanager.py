@@ -7,6 +7,12 @@ from scrapy import signals
 from scrapy.exceptions import NotConfigured
 from scrapy.conf import settings
 
+def ensure_str(string):
+    if isinstance(string, unicode):
+        return string.encode("utf-8")
+    else:
+        return string
+
 class SqlManager(object):
 
     def __init__(self):
@@ -102,7 +108,7 @@ class SqlManager(object):
 
     def get_subject_url(self, subject):
         cursor = self.conn.cursor()
-        sql = "select url from catalog where name = '%s' " % subject.encode("utf-8")
+        sql = "select url from catalog where name = '%s' " % ensure_str(subject)
         ret = None
         if cursor.execute(sql):
             ret = cursor.fetchone()[0]
@@ -111,7 +117,7 @@ class SqlManager(object):
 
     def get_subject_fd_sd(self, subject):
         cursor = self.conn.cursor()
-        s_sql = "select fd, sd from catalog where name = '%s'" % subject.encode("utf-8")
+        s_sql = "select fd, sd from catalog where name = '%s'" % ensure_str(subject)
         ret = None
         if cursor.execute(s_sql):
             ret = cursor.fetchone()

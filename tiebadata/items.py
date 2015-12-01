@@ -7,9 +7,9 @@
 
 from scrapy import Field
 from scrapy import Item
-from scrapy.contrib.loader import ItemLoader
-from scrapy.contrib.loader.processor import MapCompose 
-from scrapy.contrib.loader.processor import TakeFirst
+from scrapy.loader import ItemLoader
+from scrapy.loader.processors import MapCompose 
+from scrapy.loader.processors import TakeFirst
 
 
 def encode_utf8(value):
@@ -24,14 +24,14 @@ class ConvertItemLoader(ItemLoader):
     default_output_processor = TakeFirst()
 
 class CatalogItem(Item):
-    name = Field()
+    name = Field(default=None)
     fd = Field()
     sd = Field()
     url = Field()
 
     def __str__(self):
-        return "<CatalogItem %s,%s,%s>" % (self["fd"], self["sd"], self["name"])
-
+        return "<CatalogItem %s,%s,%s>" % (self["fd"].decode("utf-8"), self["sd"].decode("utf-8"), self["name"].decode("utf-8"))
+    
 class PostListItem(Item):
     post_id = Field()
     author_name = Field()
