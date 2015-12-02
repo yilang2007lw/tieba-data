@@ -12,6 +12,11 @@ import json
 import urllib
 import urlparse
 
+def ensure_unicode(s):
+    if isinstance(s, unicode):
+        return s
+    else:
+        return s.decode("utf-8")
 
 class SubjectSpider(Spider):
     name = "subject"
@@ -19,16 +24,16 @@ class SubjectSpider(Spider):
 
     def __init__(self, subject):
         super(SubjectSpider, self).__init__()
-        self.subject = subject
+        self.subject = ensure_unicode(subject)
         self.active_post = None
         self.refresh_postlist = True
         self.need_insert_catalog = False
 
     def start_requests(self):
-        url = self.crawler.sqlmanager.get_subject_url(unicode(self.subject, "utf-8"))
+        url = self.crawler.sqlmanager.get_subject_url(self.subject)
         if not url:
             self.need_insert_catalog = True
-            url = "http://tieba.baidu.com/f?kw=%s" % urllib.quote(self.subject)
+            url = "http://tieba.baidu.com/f?kw=%s" % urllib.quote(self.subject.encode("gbk"))
         if url:
             yield Request(url, self.parse)
 
@@ -71,13 +76,13 @@ class SubjectSpider(Spider):
             self.need_insert_catalog = False
             il = ConvertItemLoader(CatalogItem())
             il.add_value(u"name", self.subject)
-            il.add_value(u"url", response.url)
+            il.add_value(u"url", ensure_unicode(response.url))
             try:
                 info = response.css("#forumInfoPanel").css(".forum_dir_info").xpath("li/a/@href").extract()[-1]
                 query = urlparse.urlparse(info).query
                 params = urlparse.parse_qs(query)
-                il.add_value(u"fd", params["fd"][0])
-                il.add_value(u"sd", params["sd"][0])
+                il.add_value(u"fd", params["fd"][0].encode('raw_unicode_escape').decode("utf8"))
+                il.add_value(u"sd", params["sd"][0].encode('raw_unicode_escape').decode("utf8"))
                 il.load_item()
                 yield il.item
             except:

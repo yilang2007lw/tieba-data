@@ -2,12 +2,14 @@
 # -*- coding:utf-8
 
 import MySQLdb
-
-from scrapy import signals
-from scrapy.exceptions import NotConfigured
+import logging
 from scrapy.utils.project import get_project_settings
 
 settings = get_project_settings()
+conn = MySQLdb.connect(host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
+        passwd=settings.get('DB_PASSWD'), db=settings.get('DB_DATABASE'),  use_unicode=True, charset="utf8")
+
+logger = logging.getLogger()
 
 def ensure_str(string):
     if isinstance(string, unicode):
@@ -15,35 +17,15 @@ def ensure_str(string):
     else:
         return string
 
+def ensure_item(item):
+    for key ,value in item.iteritems():
+        item[key] = ensure_str(value)
+
 class SqlManager(object):
 
     def __init__(self):
-        self.conn = None
-
-    @classmethod
-    def from_crawler(cls, crawler):
-        if settings.get('DB_USER') is None:
-            raise NotConfigured
-        if settings.get('DB_PASSWD') is None:
-            raise NotConfigured
-        if settings.get('DB_HOST') is None:
-            raise NotConfigured
-        if settings.get('DB_DATABASE') is None:
-            raise NotConfigured
-
-        ext = cls()
-        crawler.signals.connect(ext.initialize, signal = signals.spider_opened)
-        crawler.signals.connect(ext.finalize, signal = signals.spider_closed)
-        crawler.sqlmanager = ext
-
-        return ext
-
-    def initialize(self, spider):
-        self.conn = MySQLdb.connect(host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
-                passwd=settings.get('DB_PASSWD'), use_unicode=True, charset="utf8")
-        cursor = self.conn.cursor()
+        cursor = conn.cursor()
         cursor.execute('create database if not exists %s' % settings.get('DB_DATABASE'))
-        self.conn.select_db(settings.get('DB_DATABASE'))
 
         table_catalog_sql = '''create table if not exists catalog (
             id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -72,27 +54,31 @@ class SqlManager(object):
             INDEX subindex (subject)
         )  ENGINE=InnoDB DEFAULT CHARACTER SET=utf8;'''
         cursor.execute(table_postinfo_sql)
-        self.conn.commit()
         cursor.close()
+        conn.commit()
 
-    def finalize(self, spider, reason):
-        self.conn.commit()
-        self.conn.close()
+    @classmethod
+    def from_crawler(cls, crawler):
+        ext = cls()
+        crawler.sqlmanager = ext
+        return ext
 
     def insert_catalog_item(self, item):
-        cursor = self.conn.cursor()
+        cursor = conn.cursor()
+        ensure_item(item)
         try:
             insert_sql = "replace into catalog (name, fd, sd, url) VALUES ('%s', '%s', '%s', '%s')" % (item["name"], item["fd"], item["sd"], item["url"])
             cursor.execute(insert_sql)
-            self.conn.commit()
+            conn.commit()
         except:
-            print "----insert catalog item failed--------", item
-            self.conn.rollback()
+            logger.warning("----insert catalog item failed--------%s" % item)
+            conn.rollback()
         finally:
             cursor.close()
 
     def insert_postinfo_item(self, item):
-        cursor = self.conn.cursor()
+        cursor = conn.cursor()
+        ensure_item(item)
         try:
             insert_sql = "replace into postinfo (id, author_name, first_post_id, reply_num, is_bakan,  \
                           vid, is_good, is_top, is_protal, title, timestamp, subject) VALUES \
@@ -101,15 +87,15 @@ class SqlManager(object):
                           item["is_bakan"], item["vid"], item["is_good"], item["is_top"], item["is_protal"], 
                           item["title"], item["timestamp"], item["subject"])
             cursor.execute(insert_sql)
-            self.conn.commit()
+            conn.commit()
         except:
-            print "----insert postinfo item failed--------", item
-            self.conn.rollback()
+            logger.warning("----insert postinfo item failed--------%s" % item)
+            conn.rollback()
         finally:
             cursor.close()
 
     def get_subject_url(self, subject):
-        cursor = self.conn.cursor()
+        cursor = conn.cursor()
         sql = "select url from catalog where name = '%s' " % ensure_str(subject)
         ret = None
         if cursor.execute(sql):
@@ -118,7 +104,7 @@ class SqlManager(object):
         return ret
 
     def get_subject_fd_sd(self, subject):
-        cursor = self.conn.cursor()
+        cursor = conn.cursor()
         s_sql = "select fd, sd from catalog where name = '%s'" % ensure_str(subject)
         ret = None
         if cursor.execute(s_sql):
@@ -127,7 +113,7 @@ class SqlManager(object):
         return ret
         
     def get_post_replynum(self, postid):
-        cursor = self.conn.cursor()
+        cursor = conn.cursor()
         sql = "select reply_num from postinfo where id = %s" % postid
         ret = None
         if cursor.execute(sql):

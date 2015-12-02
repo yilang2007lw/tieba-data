@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from twisted.internet import reactor
+from twisted.internet import defer
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
 from scrapy.utils.log import configure_logging
 from tiebadata.spiders.catalog import CatalogSpider
 from tiebadata.spiders.subject import SubjectSpider
+from tiebadata.sqlmanager import conn
 import argparse
-import MySQLdb
 import traceback
 import logging
 import os
@@ -26,15 +27,12 @@ def crawl_all_catalog():
 def crawl_fd_catalog(fd):
     print "------crawl fd catalog---------", fd
     try:
-        conn = MySQLdb.connect(host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
-                passwd=settings.get('DB_PASSWD'), use_unicode=True, charset="utf8")
         cursor = conn.cursor()
         conn.select_db(settings.get('DB_DATABASE'))
         sql = "select name from catalog where fd = '%s'" % fd
         cursor.execute(sql)
         spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
         cursor.close()
-        conn.close()
         return crawl_spiders(spiders)
     except:
         traceback.print_exc()
@@ -42,15 +40,12 @@ def crawl_fd_catalog(fd):
 def crawl_sd_catalog(sd):
     print "------crawl sd catalog---------", sd
     try:
-        conn = MySQLdb.connect(host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
-                passwd=settings.get('DB_PASSWD'), use_unicode=True, charset="utf8")
         cursor = conn.cursor()
         conn.select_db(settings.get('DB_DATABASE'))
         sql = "select name from catalog where sd = '%s'" % sd
         cursor.execute(sql)
         spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
         cursor.close()
-        conn.close()
         return crawl_spiders(spiders)
     except:
         traceback.print_exc()
@@ -59,17 +54,16 @@ def crawl_one_subject(subject):
     print "------crawl one subject---------", subject
     return crawl_spiders([SubjectSpider(subject)])
 
+@defer.inlineCallbacks
 def crawl_spiders(spiders):
-    runner = CrawlerRunner(settings)
     for spider in spiders:
         if isinstance(spider, SubjectSpider):
-            runner.crawl(spider, spider.subject)
+            yield runner.crawl(spider, spider.subject)
         else:
-            runner.crawl(spider)
-    d = runner.join()
-    d.addBoth(lambda _: reactor.stop())
-
-    reactor.run()
+            yield runner.crawl(spider)
+    conn.commit()
+    conn.close()
+    reactor.stop()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -86,6 +80,8 @@ if __name__ == "__main__":
     logging.basicConfig(filename=path, level=logging.DEBUG)
     configure_logging()
 
+    runner = CrawlerRunner(settings)
+
     if args.catalog:
         crawl_catalog_table()
     elif args.all:
@@ -98,3 +94,5 @@ if __name__ == "__main__":
         crawl_sd_catalog(args.target)
     else:
         print "------invalid---------"
+
+    reactor.run()

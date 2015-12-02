@@ -12,15 +12,9 @@ from scrapy.loader.processors import MapCompose
 from scrapy.loader.processors import TakeFirst
 
 
-def encode_utf8(value):
-    if isinstance(value, unicode):
-        return value.encode("utf-8")
-    else:
-        return value
-
 class ConvertItemLoader(ItemLoader):
 
-    default_input_processor = MapCompose(encode_utf8)
+    default_input_processor = MapCompose(unicode.strip)
     default_output_processor = TakeFirst()
 
 class CatalogItem(Item):
@@ -29,9 +23,6 @@ class CatalogItem(Item):
     sd = Field()
     url = Field()
 
-    def __str__(self):
-        return "<CatalogItem %s,%s,%s>" % (self["fd"].decode("utf-8"), self["sd"].decode("utf-8"), self["name"].decode("utf-8"))
-    
 class PostListItem(Item):
     post_id = Field()
     author_name = Field()
@@ -45,9 +36,6 @@ class PostListItem(Item):
     title = Field()
     timestamp = Field()
     subject = Field()
-
-    def __str__(self):
-        return "<PostListItem %s,%s,%s>" % (self["subject"], self["post_id"], self["title"])
 
 class PostItem(Item):
     user_id = Field()
@@ -74,6 +62,3 @@ class PostItem(Item):
     props = Field()
     post_index = Field()
     subject = Field()
-
-    def __str__(self):
-        return "<PostItem %s,%s,%s>" % (self["subject"], self["post_id"], self["level_id"])
