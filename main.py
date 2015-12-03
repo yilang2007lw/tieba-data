@@ -33,7 +33,10 @@ def crawl_fd_catalog(fd):
         cursor.execute(sql)
         spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
         cursor.close()
-        return crawl_spiders(spiders)
+        for i in xrange(0, len(spiders), 100):
+            crawl_spiders(spiders[i:i+100])
+        #return crawl_spiders(spiders)
+        reactor.stop()
     except:
         traceback.print_exc()
 
@@ -46,13 +49,17 @@ def crawl_sd_catalog(sd):
         cursor.execute(sql)
         spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
         cursor.close()
-        return crawl_spiders(spiders)
+        for i in xrange(0, len(spiders), 50):
+            crawl_spiders(spiders[i:i+50])
+        #return crawl_spiders(spiders)
+        reactor.stop()
     except:
         traceback.print_exc()
 
 def crawl_one_subject(subject):
     print "------crawl one subject---------", subject
-    return crawl_spiders([SubjectSpider(subject)])
+    crawl_spiders([SubjectSpider(subject)])
+    reactor.stop()
 
 @defer.inlineCallbacks
 def crawl_spiders(spiders):
@@ -63,7 +70,7 @@ def crawl_spiders(spiders):
             yield runner.crawl(spider)
     conn.commit()
     conn.close()
-    reactor.stop()
+    #reactor.stop()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
