@@ -3,11 +3,15 @@
 
 import MySQLdb
 import logging
+from scrapy import signals
 from scrapy.utils.project import get_project_settings
+from DBUtils.PooledDB import PooledDB
 
 settings = get_project_settings()
-conn = MySQLdb.connect(host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
+pool = PooledDB(MySQLdb, 10, 100, 100, 100, host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
         passwd=settings.get('DB_PASSWD'), db=settings.get('DB_DATABASE'),  use_unicode=True, charset="utf8")
+#self.conn = MySQLdb.self.connect(host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
+#        passwd=settings.get('DB_PASSWD'), db=settings.get('DB_DATABASE'),  use_unicode=True, charset="utf8")
 
 logger = logging.getLogger()
 
@@ -24,7 +28,11 @@ def ensure_item(item):
 class SqlManager(object):
 
     def __init__(self):
-        cursor = conn.cursor()
+        self.conn = None
+
+    def initialize(self):
+        self.conn = pool.connection()
+        cursor = self.conn.cursor()
         cursor.execute('create database if not exists %s' % settings.get('DB_DATABASE'))
 
         table_catalog_sql = '''create table if not exists catalog (
@@ -55,29 +63,35 @@ class SqlManager(object):
         )  ENGINE=InnoDB DEFAULT CHARACTER SET=utf8;'''
         cursor.execute(table_postinfo_sql)
         cursor.close()
-        conn.commit()
+        self.conn.commit()
+
+    def finalize(self):
+        self.conn.commit()
+        #self.conn.close()
 
     @classmethod
     def from_crawler(cls, crawler):
         ext = cls()
+        crawler.signals.connect(ext.initialize, signal=signals.spider_opened)
+        crawler.signals.connect(ext.finalize, signal=signals.spider_opened)
         crawler.sqlmanager = ext
         return ext
 
     def insert_catalog_item(self, item):
-        cursor = conn.cursor()
+        cursor = self.conn.cursor()
         ensure_item(item)
         try:
             insert_sql = "replace into catalog (name, fd, sd, url) VALUES ('%s', '%s', '%s', '%s')" % (item["name"], item["fd"], item["sd"], item["url"])
             cursor.execute(insert_sql)
-            conn.commit()
+            self.conn.commit()
         except:
             logger.warning("----insert catalog item failed--------%s" % item)
-            conn.rollback()
+            self.conn.rollback()
         finally:
             cursor.close()
 
     def insert_postinfo_item(self, item):
-        cursor = conn.cursor()
+        cursor = self.conn.cursor()
         ensure_item(item)
         try:
             insert_sql = "replace into postinfo (id, author_name, first_post_id, reply_num, is_bakan,  \
@@ -87,15 +101,15 @@ class SqlManager(object):
                           item["is_bakan"], item["vid"], item["is_good"], item["is_top"], item["is_protal"], 
                           item["title"], item["timestamp"], item["subject"])
             cursor.execute(insert_sql)
-            conn.commit()
+            self.conn.commit()
         except:
             logger.warning("----insert postinfo item failed--------%s" % item)
-            conn.rollback()
+            self.conn.rollback()
         finally:
             cursor.close()
 
     def get_subject_url(self, subject):
-        cursor = conn.cursor()
+        cursor = self.conn.cursor()
         sql = "select url from catalog where name = '%s' " % ensure_str(subject)
         ret = None
         if cursor.execute(sql):
@@ -104,7 +118,7 @@ class SqlManager(object):
         return ret
 
     def get_subject_fd_sd(self, subject):
-        cursor = conn.cursor()
+        cursor = self.conn.cursor()
         s_sql = "select fd, sd from catalog where name = '%s'" % ensure_str(subject)
         ret = None
         if cursor.execute(s_sql):
@@ -113,7 +127,7 @@ class SqlManager(object):
         return ret
         
     def get_post_replynum(self, postid):
-        cursor = conn.cursor()
+        cursor = self.conn.cursor()
         sql = "select reply_num from postinfo where id = %s" % postid
         ret = None
         if cursor.execute(sql):

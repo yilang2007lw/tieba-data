@@ -8,7 +8,8 @@ from scrapy.utils.project import get_project_settings
 from scrapy.utils.log import configure_logging
 from tiebadata.spiders.catalog import CatalogSpider
 from tiebadata.spiders.subject import SubjectSpider
-from tiebadata.sqlmanager import conn
+#from tiebadata.sqlmanager import conn
+from tiebadata.sqlmanager import pool
 import argparse
 import traceback
 import logging
@@ -27,12 +28,14 @@ def crawl_all_catalog():
 def crawl_fd_catalog(fd):
     print "------crawl fd catalog---------", fd
     try:
+        conn = pool.connection()
         cursor = conn.cursor()
-        conn.select_db(settings.get('DB_DATABASE'))
+        #conn.select_db(settings.get('DB_DATABASE'))
         sql = "select name from catalog where fd = '%s'" % fd
         cursor.execute(sql)
         spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
         cursor.close()
+        #conn.close()
         for i in xrange(0, len(spiders), 100):
             crawl_spiders(spiders[i:i+100])
         #return crawl_spiders(spiders)
@@ -43,12 +46,14 @@ def crawl_fd_catalog(fd):
 def crawl_sd_catalog(sd):
     print "------crawl sd catalog---------", sd
     try:
+        conn = pool.connection()
         cursor = conn.cursor()
-        conn.select_db(settings.get('DB_DATABASE'))
+        #conn.select_db(settings.get('DB_DATABASE'))
         sql = "select name from catalog where sd = '%s'" % sd
         cursor.execute(sql)
         spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
         cursor.close()
+        #conn.close()
         for i in xrange(0, len(spiders), 50):
             crawl_spiders(spiders[i:i+50])
         #return crawl_spiders(spiders)
@@ -68,8 +73,8 @@ def crawl_spiders(spiders):
             yield runner.crawl(spider, spider.subject)
         else:
             yield runner.crawl(spider)
-    conn.commit()
-    conn.close()
+    #conn.commit()
+    #conn.close()
     #reactor.stop()
 
 if __name__ == "__main__":
