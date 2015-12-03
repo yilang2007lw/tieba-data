@@ -59,6 +59,8 @@ class SubjectSpider(Spider):
             data = div.xpath("@data-field").extract()
             item = PostItem()
             try:
+                content = div.css(".d_post_content .j_d_post_content").extract()
+                item[u"content"] = content
                 tmp_dict = json.loads(data[0])
                 for ko, vo in tmp_dict.iteritems():
                     for ki, vi in vo.iteritems():
@@ -68,7 +70,7 @@ class SubjectSpider(Spider):
                 traceback.print_exc()
             else:
                 self.active_post = str(response.url.split("/")[-1])
-                item["subject"] = response.meta['pitem']["subject"].decode("utf-8")
+                item[u"subject"] = response.meta['pitem']["subject"].decode("utf-8")
                 yield item
 
     def parse(self, response):
@@ -99,7 +101,7 @@ class SubjectSpider(Spider):
 
                 sql_replynum = self.crawler.sqlmanager.get_post_replynum(pid)
                 if sql_replynum is None or replynum > sql_replynum:
-                    text = li.css(".threadlist_text").xpath("a/@title").extract()
+                    text = li.css(".threadlist_title").xpath("a/@title").extract()
                     data_dict[u"title"] = text[0]
                     data_dict[u"subject"] = self.subject
                     page = 1 if sql_replynum is None else sql_replynum / 30 + 1

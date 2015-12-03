@@ -62,3 +62,4 @@ class PostItem(Item):
     props = Field()
     post_index = Field()
     subject = Field()
+    content = Field()
