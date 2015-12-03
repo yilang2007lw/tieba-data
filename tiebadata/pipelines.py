@@ -12,6 +12,7 @@ from tiebadata.items import PostItem
 from scrapy.exceptions import DropItem
 import os
 import json
+import codecs
 
 class CatalogPipeline(object):
 
@@ -58,6 +59,7 @@ class PostPipeline(object):
                 os.makedirs(post_dir)
 
             post_file = os.path.join(post_dir, page)
-            with open(post_file, "a+") as f:
-                f.writelines(json.dumps(dict(item)) + "\n")
+            with codecs.open(post_file, "wb", "gbk") as f:
+                f.write(json.dumps(dict(item), ensure_ascii=False))
+                f.write("\n")
         return item
