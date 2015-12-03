@@ -77,7 +77,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     path = os.path.join(os.path.dirname(__file__), "log", time.strftime('%Y%m%d_%H%M%S'))
-    logging.basicConfig(filename=path, level=logging.DEBUG)
+    logging.basicConfig(filename=path, level=logging.WARNING)
     configure_logging()
 
     runner = CrawlerRunner(settings)

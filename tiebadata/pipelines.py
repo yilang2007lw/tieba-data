@@ -39,13 +39,6 @@ class PostListPipeline(object):
 
 class PostPipeline(object):
 
-    def open_spider(self, spider):
-        spider.files = {}
-
-    def close_spider(self, spider):
-        for f in spider.files.itervalues():
-            f.close()
-
     def process_item(self, item, spider):
         if isinstance(item, PostItem):
             pid = spider.active_post.split("?")[0]
@@ -63,13 +56,8 @@ class PostPipeline(object):
             post_dir = os.path.join(spider.settings["DATA_HOME"], "tiebadata", fd.encode("utf-8"), sd.encode("utf-8"), item["subject"].encode("utf-8"), pid)
             if not os.path.exists(post_dir):
                 os.makedirs(post_dir)
+
             post_file = os.path.join(post_dir, page)
-
-            if not os.path.exists(post_file):
-                open(post_file, "w+").close()
-
-            if not spider.files.has_key(spider.active_post):
-                spider.files[spider.active_post] = open(post_file, "w")
-            line = json.dumps(dict(item)) 
-            spider.files[spider.active_post].writelines(line + "\n")
+            with open(post_file, "a+") as f:
+                f.writelines(json.dumps(dict(item)) + "\n")
         return item

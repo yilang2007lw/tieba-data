@@ -7,6 +7,7 @@
 #
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
+import logging
 
 BOT_NAME = 'tiebadata'
 
@@ -28,6 +29,7 @@ ITEM_PIPELINES = {
 }
 
 EXTENSIONS = {
+    "scrapy.telnet.TelnetConsole": None,
     "tiebadata.sqlmanager.SqlManager":500,
 }
 
@@ -37,3 +39,5 @@ DB_PASSWD="tiebaspider"
 DB_DATABASE="tiebadata"
 
 DATA_HOME="/Volumes/MobileHD/"
+
+LOG_LEVEL=logging.INFO
