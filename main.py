@@ -8,8 +8,10 @@ from scrapy.utils.project import get_project_settings
 from scrapy.utils.log import configure_logging
 from tiebadata.spiders.catalog import CatalogSpider
 from tiebadata.spiders.subject import SubjectSpider
-#from tiebadata.sqlmanager import conn
-from tiebadata.sqlmanager import pool
+from tiebadata.sqlmanager import setup_db
+from tiebadata.sqlmanager import get_all_subject
+from tiebadata.sqlmanager import get_subject_by_fd
+from tiebadata.sqlmanager import get_subject_by_sd
 import argparse
 import traceback
 import logging
@@ -24,47 +26,31 @@ def crawl_catalog_table():
 
 def crawl_all_catalog():
     print "-------crawl all catalog-----------"
+    try:
+        spiders = map(lambda x: SubjectSpider(x[0]), get_all_subject())
+        return crawl_spiders(spiders)
+    except:
+        traceback.print_exc()
 
 def crawl_fd_catalog(fd):
     print "------crawl fd catalog---------", fd
     try:
-        conn = pool.connection()
-        cursor = conn.cursor()
-        #conn.select_db(settings.get('DB_DATABASE'))
-        sql = "select name from catalog where fd = '%s'" % fd
-        cursor.execute(sql)
-        spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
-        cursor.close()
-        #conn.close()
-        for i in xrange(0, len(spiders), 100):
-            crawl_spiders(spiders[i:i+100])
-        #return crawl_spiders(spiders)
-        reactor.stop()
+        spiders = map(lambda x: SubjectSpider(x[0]), get_subject_by_fd(fd))
+        return crawl_spiders(spiders)
     except:
         traceback.print_exc()
 
 def crawl_sd_catalog(sd):
     print "------crawl sd catalog---------", sd
     try:
-        conn = pool.connection()
-        cursor = conn.cursor()
-        #conn.select_db(settings.get('DB_DATABASE'))
-        sql = "select name from catalog where sd = '%s'" % sd
-        cursor.execute(sql)
-        spiders = map(lambda x: SubjectSpider(x[0]), cursor.fetchall())
-        cursor.close()
-        #conn.close()
-        for i in xrange(0, len(spiders), 50):
-            crawl_spiders(spiders[i:i+50])
-        #return crawl_spiders(spiders)
-        reactor.stop()
+        spiders = map(lambda x: SubjectSpider(x[0]), get_subject_by_sd(sd))
+        return crawl_spiders(spiders)
     except:
         traceback.print_exc()
 
 def crawl_one_subject(subject):
     print "------crawl one subject---------", subject
     crawl_spiders([SubjectSpider(subject)])
-    reactor.stop()
 
 @defer.inlineCallbacks
 def crawl_spiders(spiders):
@@ -73,9 +59,7 @@ def crawl_spiders(spiders):
             yield runner.crawl(spider, spider.subject)
         else:
             yield runner.crawl(spider)
-    #conn.commit()
-    #conn.close()
-    #reactor.stop()
+    reactor.stop()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -93,6 +77,7 @@ if __name__ == "__main__":
     configure_logging()
 
     runner = CrawlerRunner(settings)
+    setup_db()
 
     if args.catalog:
         crawl_catalog_table()

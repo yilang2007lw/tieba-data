@@ -14,6 +14,9 @@ BOT_NAME = 'tiebadata'
 SPIDER_MODULES = ['tiebadata.spiders']
 NEWSPIDER_MODULE = 'tiebadata.spiders'
 
+SCHEDULER = "scrapy_redis.scheduler.Scheduler"
+SCHEDULER_PERSIST = True
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'tiebadata (+http://www.yourdomain.com)'
 

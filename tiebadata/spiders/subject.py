@@ -59,8 +59,13 @@ class SubjectSpider(Spider):
             data = div.xpath("@data-field").extract()
             item = PostItem()
             try:
-                content = div.css(".d_post_content .j_d_post_content").extract()
+                content = div.css(".d_post_content").css(".j_d_post_content").extract()[-1]
                 item[u"content"] = content
+            except:
+                item[u"content"] = ""
+                traceback.print_exc()
+
+            try:
                 tmp_dict = json.loads(data[0])
                 for ko, vo in tmp_dict.iteritems():
                     for ki, vi in vo.iteritems():

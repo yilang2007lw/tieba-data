@@ -60,7 +60,7 @@ class PostPipeline(object):
 
             post_file = os.path.join(post_dir, page)
 
-            with codecs.open(post_file, "a", "gbk") as f:
+            with codecs.open(post_file, "a", "utf-8") as f:
                 f.write(json.dumps(dict(item), ensure_ascii=False))
                 f.write("\n")
         return item

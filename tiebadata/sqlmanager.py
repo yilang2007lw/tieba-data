@@ -10,8 +10,6 @@ from DBUtils.PooledDB import PooledDB
 settings = get_project_settings()
 pool = PooledDB(MySQLdb, 10, 100, 100, 100, host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
         passwd=settings.get('DB_PASSWD'), db=settings.get('DB_DATABASE'),  use_unicode=True, charset="utf8")
-#self.conn = MySQLdb.self.connect(host=settings.get('DB_HOST'), user=settings.get('DB_USER'), 
-#        passwd=settings.get('DB_PASSWD'), db=settings.get('DB_DATABASE'),  use_unicode=True, charset="utf8")
 
 logger = logging.getLogger()
 
@@ -25,14 +23,9 @@ def ensure_item(item):
     for key ,value in item.iteritems():
         item[key] = ensure_str(value)
 
-class SqlManager(object):
-
-    def __init__(self):
-        self.conn = None
-
-    def initialize(self):
-        self.conn = pool.connection()
-        cursor = self.conn.cursor()
+def setup_db():
+        conn = pool.connection()
+        cursor = conn.cursor()
         cursor.execute('create database if not exists %s' % settings.get('DB_DATABASE'))
 
         table_catalog_sql = '''create table if not exists catalog (
@@ -63,17 +56,54 @@ class SqlManager(object):
         )  ENGINE=InnoDB DEFAULT CHARACTER SET=utf8;'''
         cursor.execute(table_postinfo_sql)
         cursor.close()
-        self.conn.commit()
+        conn.commit()
+
+def get_all_subject():
+    conn = pool.connection()
+    cursor = conn.cursor()
+    sql = "select name from catalog"
+    ret = None
+    if  cursor.execute(sql):
+        ret = cursor.fetchall()
+    cursor.close()
+    return ret
+
+def get_subject_by_fd(fd):
+    conn = pool.connection()
+    cursor = conn.cursor()
+    sql = "select name from catalog where fd = '%s'" % ensure_str(fd)
+    ret = None
+    if  cursor.execute(sql):
+        ret = cursor.fetchall()
+    cursor.close()
+    return ret
+
+def get_subject_by_sd(sd):
+    conn = pool.connection()
+    cursor = conn.cursor()
+    sql = "select name from catalog where sd = '%s'" % ensure_str(sd)
+    ret = None
+    if  cursor.execute(sql):
+        ret = cursor.fetchall()
+    cursor.close()
+    return ret
+
+class SqlManager(object):
+
+    def __init__(self):
+        self.conn = None
+
+    def initialize(self):
+        self.conn = pool.connection()
 
     def finalize(self):
         self.conn.commit()
-        #self.conn.close()
 
     @classmethod
     def from_crawler(cls, crawler):
         ext = cls()
         crawler.signals.connect(ext.initialize, signal=signals.spider_opened)
-        crawler.signals.connect(ext.finalize, signal=signals.spider_opened)
+        crawler.signals.connect(ext.finalize, signal=signals.spider_closed)
         crawler.sqlmanager = ext
         return ext
 
